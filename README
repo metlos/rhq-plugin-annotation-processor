@@ -1,2 +1,9 @@
 An experimental annotation processor for generating the glue code to make a bunch of POJOs an RHQ plugin
 
+Note that this currently only defines an incomplete set of annotations.
+
+Notably, I haven't come up with an intelligent way of converting <content> and ContentFacet into a set of annotations.
+
+Also, you might notice that the annotation processor itself haven't been even started yet ;)
+
+See javadoc of the annotations to get a feel for what it might be like and also check out an example plugin in the tests - that's just to get a feel for how such plugin would look like.
