@@ -60,7 +60,7 @@ public @interface PojoResourceComponent {
     /**
      * The category of the resource, i.e. platform, server or service.
      */
-    Category type();
+    Category category();
 
     /**
      * A PIQL query to discover processes this resource should be managing.
