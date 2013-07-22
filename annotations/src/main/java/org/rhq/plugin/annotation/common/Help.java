@@ -17,44 +17,19 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugin.annotation;
+package org.rhq.plugin.annotation.common;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.rhq.core.pluginapi.plugin.PluginContext;
-import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
-
 /**
  * @author Lukas Krejci
  * @since 4.9
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.PACKAGE)
-public @interface AgentPlugin {
-    public static class NoopLifecycleListener implements PluginLifecycleListener {
-
-        @Override
-        public void initialize(PluginContext context) throws Exception {
-        }
-
-        @Override
-        public void shutdown() {
-        }
-    }
-
-    public @interface Dependency {
-        String pluginName();
-        boolean useClasses() default false;
-    }
-
-    Dependency[] dependencies() default {};
-
-    Class<? extends PluginLifecycleListener> pluginLifecycleListener() default NoopLifecycleListener.class;
-
-    String version();
-
-    String ampsVersion() default "2.0";
+@Target({ElementType.TYPE, ElementType.PACKAGE})
+public @interface Help {
+    String value();
 }

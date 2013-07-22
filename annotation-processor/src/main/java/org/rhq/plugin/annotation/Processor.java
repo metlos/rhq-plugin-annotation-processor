@@ -19,6 +19,8 @@
 
 package org.rhq.plugin.annotation;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -28,6 +30,18 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.tools.FileObject;
+import javax.tools.JavaFileManager;
+import javax.tools.StandardLocation;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.plugin.annotation.processor.AgentPluginDescriptorException;
+import org.rhq.plugin.annotation.processor.Context;
+import org.rhq.plugin.annotation.processor.visitor.Visitors;
 
 /**
  * An annotation processor to generate a plugin out of a Jar with annotated classes at compile time.
@@ -39,23 +53,65 @@ import javax.lang.model.element.TypeElement;
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class Processor extends AbstractProcessor {
 
+    private Context processingContext;
+    private Visitors visitors = new Visitors();
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (roundEnv.processingOver()) {
+            validate();
             writeOut();
         }
 
         for (TypeElement annotation : annotations) {
             for (Element e : roundEnv.getElementsAnnotatedWith(annotation)) {
-
+                e.accept(visitors, getProcessingContext());
             }
         }
+
         return true;
     }
 
-    private void writeOut() {
-        //TODO implement
+    private Context getProcessingContext() {
+        if (processingContext == null) {
+            processingContext = new Context(processingEnv);
+        }
+
+        return processingContext;
+    }
+    private void validate() {
     }
 
+    private void writeOut() {
+        PluginDescriptor descriptor = processingContext.getPluginDescriptor();
+        if (descriptor == null) {
+            //no agent plugin here
+            return;
+        }
 
+        JAXBContext context = null;
+        OutputStream out = null;
+        try {
+            context = JAXBContext.newInstance(PluginDescriptor.class);
+            Marshaller marshaller = context.createMarshaller();
+            FileObject rhqPluginXml = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "",
+                "META-INF/rhq-plugin.xml", null);
+            out = rhqPluginXml.openOutputStream();
+
+            marshaller.marshal(descriptor, out);
+        } catch (JAXBException e) {
+            throw new IllegalStateException("Failed to create the plugin descriptor", e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to create the plugin descriptor", e);
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    // ignored
+                }
+            }
+        }
+        //TODO implement
+    }
 }

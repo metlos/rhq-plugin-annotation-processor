@@ -17,17 +17,27 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugin.annotation.processor.model;
+package org.rhq.plugin.annotation.processor;
 
 /**
  * @author Lukas Krejci
  * @since 4.9
  */
-public class ResourceTypeModel {
+public class AgentPluginDescriptorException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
-    private Class<?> discoveryClass;
-    private String name;
-    private String displayName;
-    private String description;
+    public AgentPluginDescriptorException() {
+    }
 
+    public AgentPluginDescriptorException(Throwable cause) {
+        super(cause);
+    }
+
+    public AgentPluginDescriptorException(String message) {
+        super(message);
+    }
+
+    public AgentPluginDescriptorException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
