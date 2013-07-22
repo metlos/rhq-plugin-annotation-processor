@@ -29,7 +29,7 @@ import org.rhq.plugin.annotation.operation.Operation;
  * @author Lukas Krejci
  * @since 4.9
  */
-@PojoResourceComponent(category = PojoResourceComponent.Category.SERVER)
+@PojoResourceComponent(category = PojoResourceComponent.Category.SERVER, discovery = Discovery.class)
 public class Resource {
 
     private PluginConfiguration config;

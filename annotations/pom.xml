@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq</groupId>
-    <artifactId>rhq-plugin-annotation-processor-parent</artifactId>
+    <artifactId>rhq-plugin-annotations</artifactId>
     <version>4.9.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    
-    <name>RHQ plugin annotations and processors parent</name>
-    
-    <modules>
-        <module>annotations</module>
-        <module>annotation-processor</module>
-    </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-plugin-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 </project>

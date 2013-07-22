@@ -17,21 +17,17 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugin.annotation.common;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package org.rhq.plugin.annotation.processor.model;
 
 /**
- * Provides user-visible description of the element.
- *
  * @author Lukas Krejci
  * @since 4.9
  */
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-public @interface Description {
-    String value();
+public class ResourceTypeModel {
+
+    private Class<?> discoveryClass;
+    private String name;
+    private String displayName;
+    private String description;
+
 }

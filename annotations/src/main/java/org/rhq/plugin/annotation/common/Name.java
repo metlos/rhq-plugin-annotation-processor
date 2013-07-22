@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * @since 4.9
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.PACKAGE})
 public @interface Name {
     String value();
 }
