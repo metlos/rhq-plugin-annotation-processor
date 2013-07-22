@@ -24,6 +24,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.plugin.annotation.drift.FileSystemDrift;
 import org.rhq.plugin.annotation.event.Event;
 
@@ -56,6 +57,11 @@ public @interface PojoResourceComponent {
     public enum Category {
         PLATFORM, SERVER, SERVICE
     }
+
+    /**
+     * Specifies the discovery class for the resources of this type.
+     */
+    Class<? extends ResourceDiscoveryComponent<?>> discovery();
 
     /**
      * The category of the resource, i.e. platform, server or service.

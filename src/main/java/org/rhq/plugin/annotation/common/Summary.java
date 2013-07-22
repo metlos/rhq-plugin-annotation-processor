@@ -16,7 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugin.annotation.operation;
+
+package org.rhq.plugin.annotation.common;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -24,14 +25,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameter.
- * 
- * @author Galder Zamarreño
- * @since 4.0
+ * Annotates a configuration property or a metric as a part of the summary.
+ *
+ * @author Lukas Krejci
+ * @since 4.9
  */
-@Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.SOURCE)
-public @interface Parameter {
-   String name() default "";
-   String description() default "";
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface Summary {
 }

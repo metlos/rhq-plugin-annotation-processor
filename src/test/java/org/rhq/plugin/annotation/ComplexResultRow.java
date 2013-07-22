@@ -19,7 +19,7 @@
 
 package org.rhq.plugin.annotation;
 
-import org.rhq.plugin.annotation.configuration.Property;
+import org.rhq.plugin.annotation.common.DisplayName;
 
 /**
  * @author Lukas Krejci
@@ -27,10 +27,10 @@ import org.rhq.plugin.annotation.configuration.Property;
  */
 public class ComplexResultRow {
 
-    @Property(displayName = "Foo")
+    @DisplayName("Foo")
     private int col1;
 
-    @Property(displayName = "Bar")
+    @DisplayName("Bar")
     private int col2;
 
     public int getCol1() {

@@ -16,7 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugin.annotation.metric;
+
+package org.rhq.plugin.annotation.common;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -24,19 +25,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to denote a metric that should be measured
+ * Provides a non-default name of the element. If this is not specified the name of the element is deduced from its
+ * java name.
  *
- * @author Heiko W. Rupp
- * @author Galder Zamarre–o
+ * @author Lukas Krejci
+ * @since 4.9
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface Metric {
-    long defaultInterval() default 120000000L; // 20 min
-
-    DataType dataType() default DataType.MEASUREMENT;
-
-    Units units() default Units.NONE;
-
-    MeasurementType measurementType() default MeasurementType.DYNAMIC;
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+public @interface Name {
+    String value();
 }

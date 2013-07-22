@@ -20,8 +20,9 @@
 package org.rhq.plugin.annotation;
 
 import org.rhq.plugin.annotation.bundle.BundleDestination;
+import org.rhq.plugin.annotation.common.Description;
+import org.rhq.plugin.annotation.common.DisplayName;
 import org.rhq.plugin.annotation.configuration.Password;
-import org.rhq.plugin.annotation.configuration.Property;
 import org.rhq.plugin.annotation.configuration.Required;
 import org.rhq.plugin.annotation.drift.Drift;
 
@@ -31,7 +32,8 @@ import org.rhq.plugin.annotation.drift.Drift;
  */
 public class PluginConfiguration {
 
-    @Property(displayName = "Super path", description = "Jada jada")
+    @DisplayName("Super path")
+    @Description("Jada jada")
     @Required
     @Drift(name = "Installation path")
     @BundleDestination(name = "Installation path")
