@@ -20,11 +20,7 @@
 package org.rhq.plugin.annotation.processor;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -35,7 +31,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor6;
-import javax.lang.model.util.SimpleTypeVisitor6;
 
 /**
  * @author Lukas Krejci
@@ -47,61 +42,9 @@ public class Util {
 
     }
 
-    private static ThreadLocal<Boolean> gettingClassName = new ThreadLocal<Boolean>();
-    private static ThreadLocal<String> foundClassName = new ThreadLocal<String>();
-    static {
-        gettingClassName.set(false);
-    }
-
-    private static AnnotationValueVisitor<String, Void> classNameExtractor = new SimpleAnnotationValueVisitor6<String, Void>() {
-        @Override
-        public String visitType(TypeMirror t, Void aVoid) {
-            return t.accept(new SimpleTypeVisitor6<String, Void>() {
-                @Override
-                public String visitDeclared(DeclaredType t, Void aVoid) {
-                    return ((TypeElement) t.asElement()).getQualifiedName().toString();
-                }
-            }, null);
-        }
-    };
-
-    public static <T extends Annotation> T asAnnotation(AnnotationMirror mirror, final Class<T> annotationClass, Context context) {
-        final Map<? extends ExecutableElement, ? extends AnnotationValue> annotationValues = context
-            .getProcessingEnvironment().getElementUtils().getElementValuesWithDefaults(mirror);
-
-        return annotationClass.cast(Proxy
-            .newProxyInstance(annotationClass.getClassLoader(), new Class[]{annotationClass}, new InvocationHandler() {
-                @Override
-                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                    for(Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e : annotationValues.entrySet()) {
-                        if (e.getKey().getSimpleName().toString().equals(method.getName())) {
-                            if (gettingClassName.get()) {
-                                String className = e.getValue().accept(classNameExtractor, null);
-                                foundClassName.set(className);
-                                return null;
-                            } else {
-                                return e.getValue().getValue();
-                            }
-                        }
-                    }
-
-                    throw new IllegalArgumentException("Method " + method + " not found on annotation " + annotationClass);
-                }
-            }));
-    }
-
-    public static <T extends Annotation> T findAnnotation(Element e, Class<T> annotation, Context context) {
-        AnnotationMirror mirror = findAnnotation(e, annotation);
-        if (mirror == null) {
-            return null;
-        }
-
-        return asAnnotation(mirror, annotation, context);
-    }
-
     public static AnnotationMirror findAnnotation(Element e, Class<? extends Annotation> annotation) {
         String name = annotation.getName();
-        for(AnnotationMirror a : e.getAnnotationMirrors()) {
+        for (AnnotationMirror a : e.getAnnotationMirrors()) {
             TypeElement el = (TypeElement) a.getAnnotationType().asElement();
             if (name.equals(el.getQualifiedName().toString())) {
                 return a;
@@ -111,19 +54,75 @@ public class Util {
         return null;
     }
 
-    public static String classNameOf(Callable<Class<?>> statement) {
-        try {
-            gettingClassName.set(true);
-            statement.call();
-            return foundClassName.get();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            gettingClassName.set(false);
+    public static <Ctx extends Context> void visitAnnotation(AnnotationMirror annotation, AnnotationVisitor<Ctx> visitor,
+        Ctx context) {
+
+        if (annotation == null) {
+            return;
+        }
+
+        Map<? extends ExecutableElement, ? extends AnnotationValue> elements = context.getProcessingEnvironment()
+            .getElementUtils().getElementValuesWithDefaults(
+                annotation);
+        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e : elements.entrySet()) {
+            TypeMirror fieldType = e.getKey().getReturnType();
+            String fieldName = e.getKey().getSimpleName().toString();
+            visitor.visitField(fieldType, fieldName, e.getValue(), context);
         }
     }
 
     public static String getNameStoredInAnnotations(Class<?> cls) {
         return cls.getName().replace('$', '.');
     }
+
+    public static String getTypeName(DeclaredType type) {
+        return ((TypeElement) type.asElement()).getQualifiedName().toString();
+    }
+
+    public static AnnotationValueVisitor<Object, Context> PRIMITIVE_VALUE_EXTRACTOR = new SimpleAnnotationValueVisitor6<Object, Context>() {
+        @Override
+        public Object visitBoolean(boolean b, Context context) {
+            return b;
+        }
+
+        @Override
+        public Object visitByte(byte b, Context context) {
+            return b;
+        }
+
+        @Override
+        public Object visitChar(char c, Context context) {
+            return c;
+        }
+
+        @Override
+        public Object visitDouble(double d, Context context) {
+            return d;
+        }
+
+        @Override
+        public Object visitFloat(float f, Context context) {
+            return f;
+        }
+
+        @Override
+        public Object visitInt(int i, Context context) {
+            return i;
+        }
+
+        @Override
+        public Object visitLong(long i, Context context) {
+            return i;
+        }
+
+        @Override
+        public Object visitShort(short s, Context context) {
+            return s;
+        }
+
+        @Override
+        public Object visitString(String s, Context context) {
+            return s;
+        }
+    };
 }

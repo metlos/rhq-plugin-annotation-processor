@@ -1,6 +1,6 @@
 @Name("TestPlugin")
 @Description("Test plugin for the annotation processor")
-@AgentPlugin(version = "1.0.0-SNAPSHOT")
+@AgentPlugin(version = "1.0.0-SNAPSHOT", dependencies = @AgentPlugin.Dependency(pluginName = "fake", useClasses = true))
 package org.rhq.plugin.annotation;
 
 import org.rhq.plugin.annotation.common.Description;
