@@ -76,7 +76,7 @@ public class PluginVisitor extends AbstractElementVisitor6<Void, Context> {
             context.setPluginDescriptor(pluginDescriptor);
         }
 
-        public PluginDescriptor getDescriptor() {
+        public PluginDescriptor getWorkingPluginDescriptor() {
             return descriptor;
         }
     }
@@ -120,7 +120,7 @@ public class PluginVisitor extends AbstractElementVisitor6<Void, Context> {
         public Void visitArray(List<? extends AnnotationValue> vals, PluginDescriptorContext context) {
             for (AnnotationValue dep : vals) {
                 PluginDescriptor.Depends depends = dep.accept(dependsExtractor, context);
-                context.descriptor.getDepends().add(depends);
+                context.getWorkingPluginDescriptor().getDepends().add(depends);
             }
             return null;
         }
