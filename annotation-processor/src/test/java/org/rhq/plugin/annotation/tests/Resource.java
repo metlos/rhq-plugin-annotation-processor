@@ -17,10 +17,11 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugin.annotation;
+package org.rhq.plugin.annotation.tests;
 
 import java.util.List;
 
+import org.rhq.plugin.annotation.PojoResourceComponent;
 import org.rhq.plugin.annotation.configuration.ResourceConfiguration;
 import org.rhq.plugin.annotation.metric.Metric;
 import org.rhq.plugin.annotation.operation.Operation;
@@ -29,7 +30,7 @@ import org.rhq.plugin.annotation.operation.Operation;
  * @author Lukas Krejci
  * @since 4.9
  */
-@PojoResourceComponent(category = PojoResourceComponent.Category.SERVER, discovery = Discovery.class)
+@PojoResourceComponent(category = PojoResourceComponent.Category.SERVER)
 public class Resource {
 
     private PluginConfiguration config;

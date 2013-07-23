@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugin.annotation;
+package org.rhq.plugin.annotation.tests;
 
 import org.rhq.plugin.annotation.common.DisplayName;
 

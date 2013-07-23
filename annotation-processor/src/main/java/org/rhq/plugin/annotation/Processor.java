@@ -31,17 +31,19 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.FileObject;
-import javax.tools.JavaFileManager;
 import javax.tools.StandardLocation;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
+import org.rhq.core.clientapi.descriptor.plugin.PlatformDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.plugin.annotation.processor.AgentPluginDescriptorException;
-import org.rhq.plugin.annotation.processor.Context;
+import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
+import org.rhq.plugin.annotation.processor.ProcessingContext;
 import org.rhq.plugin.annotation.processor.visitor.Visitors;
+import org.rhq.plugin.annotation.processor.visitor.util.ResourceDescriptorAndDiscovery;
 
 /**
  * An annotation processor to generate a plugin out of a Jar with annotated classes at compile time.
@@ -49,11 +51,11 @@ import org.rhq.plugin.annotation.processor.visitor.Visitors;
  * @author Lukas Krejci
  * @since 4.9
  */
-@SupportedAnnotationTypes({"org.rhq.plugin.annotation.PojoResourceComponent", "org.rhq.plugin.annotation.AgentPlugin"})
+@SupportedAnnotationTypes({"org.rhq.plugin.annotation.PojoResourceComponent", "org.rhq.plugin.annotation.AgentPlugin", "org.rhq.plugin.annotation.DiscoveryFor"})
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class Processor extends AbstractProcessor {
 
-    private Context processingContext;
+    private ProcessingContext processingContext;
     private Visitors visitors = new Visitors();
 
     @Override
@@ -72,9 +74,9 @@ public class Processor extends AbstractProcessor {
         return true;
     }
 
-    private Context getProcessingContext() {
+    private ProcessingContext getProcessingContext() {
         if (processingContext == null) {
-            processingContext = new Context(processingEnv);
+            processingContext = new ProcessingContext(processingEnv);
         }
 
         return processingContext;
@@ -88,6 +90,19 @@ public class Processor extends AbstractProcessor {
             //no agent plugin here
             return;
         }
+
+        for(ResourceDescriptorAndDiscovery rdadc : processingContext.getResourceTypes().values()) {
+            ResourceDescriptor r = rdadc.finalizeDescriptor();
+            if (r instanceof PlatformDescriptor)  {
+                descriptor.getPlatforms().add((PlatformDescriptor) r);
+            } else if (r instanceof ServerDescriptor) {
+                descriptor.getServers().add((ServerDescriptor) r);
+            } else if (r instanceof ServiceDescriptor) {
+                descriptor.getServices().add((ServiceDescriptor) r);
+            }
+        }
+
+        //TODO merge the descriptor with a potential pre-existing one
 
         JAXBContext context = null;
         OutputStream out = null;
@@ -112,6 +127,5 @@ public class Processor extends AbstractProcessor {
                 }
             }
         }
-        //TODO implement
     }
 }

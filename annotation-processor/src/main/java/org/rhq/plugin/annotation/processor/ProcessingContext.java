@@ -19,20 +19,27 @@
 
 package org.rhq.plugin.annotation.processor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.AnnotationMirror;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.plugin.annotation.processor.visitor.util.ResourceDescriptorAndDiscovery;
 
 /**
  * @author Lukas Krejci
  * @since 4.9
  */
-public class Context {
+public class ProcessingContext {
 
     private PluginDescriptor pluginDescriptor;
+    private final Map<String, ResourceDescriptorAndDiscovery> resourceTypes = new HashMap<String, ResourceDescriptorAndDiscovery>();
+
     private final ProcessingEnvironment processingEnvironment;
 
-    public Context(ProcessingEnvironment processingEnvironment) {
+    public ProcessingContext(ProcessingEnvironment processingEnvironment) {
         this.processingEnvironment = processingEnvironment;
     }
 
@@ -46,5 +53,16 @@ public class Context {
 
     public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
         this.pluginDescriptor = pluginDescriptor;
+    }
+
+    /**
+     * @return a map of so far defined resource types. The keys are the names of the resource types.
+     */
+    public Map<String, ResourceDescriptorAndDiscovery> getResourceTypes() {
+        return resourceTypes;
+    }
+
+    public AnnotationValueExtractor getValueExtractor(AnnotationMirror annotation) {
+        return new AnnotationValueExtractor(annotation, this);
     }
 }

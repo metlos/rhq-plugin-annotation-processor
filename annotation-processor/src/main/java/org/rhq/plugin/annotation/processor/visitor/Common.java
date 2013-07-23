@@ -19,18 +19,13 @@
 
 package org.rhq.plugin.annotation.processor.visitor;
 
-import java.lang.annotation.Annotation;
-
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
 
 import org.rhq.plugin.annotation.common.Description;
 import org.rhq.plugin.annotation.common.DisplayName;
 import org.rhq.plugin.annotation.common.Help;
 import org.rhq.plugin.annotation.common.Name;
+import org.rhq.plugin.annotation.processor.Util;
 
 /**
  * @author Lukas Krejci
@@ -45,25 +40,35 @@ public class Common {
         Name name = element.getAnnotation(Name.class);
         String defaultName = element.getSimpleName().toString();
 
-        return name == null ? defaultName : name.value();
+        return name == null ? defaultName : Util.nullify(name.value());
     }
 
     public static String getAnnotatedDisplayName(Element element) {
         DisplayName name = element.getAnnotation(DisplayName.class);
 
-        return name == null ? null : name.value();
+        return name == null ? null : Util.nullify(name.value());
     }
 
     public static String getAnnotatedDescription(Element element) {
         Description descr = element.getAnnotation(Description.class);
 
-        return descr == null ? null : descr.value();
+        return descr == null ? null : Util.nullify(descr.value());
     }
 
-    public static String getAnnotatedHelp(Element element) {
+    public static org.rhq.core.clientapi.descriptor.plugin.Help getAnnotatedHelp(Element element) {
         Help descr = element.getAnnotation(Help.class);
 
-        return descr == null ? null : descr.value();
+        String text = descr == null ? null : Util.nullify(descr.value());
+
+        if (text == null) {
+            return null;
+        } else {
+            org.rhq.core.clientapi.descriptor.plugin.Help help = new org.rhq.core.clientapi.descriptor.plugin.Help();
+            help.setContentType("text/html");
+            help.getContent().add(text);
+
+            return help;
+        }
     }
 
 }
