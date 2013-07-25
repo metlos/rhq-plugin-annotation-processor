@@ -21,10 +21,12 @@ package org.rhq.plugin.annotation.processor.visitor;
 
 import javax.lang.model.element.Element;
 
+import org.rhq.core.clientapi.descriptor.configuration.MeasurementUnitsDescriptor;
 import org.rhq.plugin.annotation.common.Description;
 import org.rhq.plugin.annotation.common.DisplayName;
 import org.rhq.plugin.annotation.common.Help;
 import org.rhq.plugin.annotation.common.Name;
+import org.rhq.plugin.annotation.common.Unit;
 import org.rhq.plugin.annotation.processor.Util;
 
 /**
@@ -53,6 +55,12 @@ public class Common {
         Description descr = element.getAnnotation(Description.class);
 
         return descr == null ? null : Util.nullify(descr.value());
+    }
+
+    public static MeasurementUnitsDescriptor getAnnotatedUnit(Element element) {
+        Unit unit = element.getAnnotation(Unit.class);
+
+        return unit == null ? null : MeasurementUnitsDescriptor.fromValue(unit.value().toString());
     }
 
     public static org.rhq.core.clientapi.descriptor.plugin.Help getAnnotatedHelp(Element element) {

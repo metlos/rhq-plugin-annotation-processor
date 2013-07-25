@@ -230,6 +230,17 @@ public class Util {
         return col != null && !col.isEmpty();
     }
 
+    public static boolean implementsInterface(TypeElement type, String interfaceName, ProcessingContext context) {
+        List<TypeElement> ifaces = getAllInterfaces(type, context);
+        for(TypeElement iface : ifaces) {
+            if (interfaceName.equals(iface.getQualifiedName().toString())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static List<TypeElement> getAllInterfaces(TypeElement element, ProcessingContext context) {
         List<TypeElement> ret = new ArrayList<TypeElement>();
 
@@ -262,5 +273,14 @@ public class Util {
         }
 
         return ret;
+    }
+
+    public static TypeElement getTypeElement(TypeMirror mirror, ProcessingContext context) {
+        Types types = context.getProcessingEnvironment().getTypeUtils();
+        if (mirror.getKind().isPrimitive()) {
+            return types.boxedClass(types.getPrimitiveType(mirror.getKind()));
+        } else {
+            return (TypeElement) types.asElement(mirror);
+        }
     }
 }

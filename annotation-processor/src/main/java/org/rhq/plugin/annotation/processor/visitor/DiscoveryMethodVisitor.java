@@ -19,14 +19,11 @@
 
 package org.rhq.plugin.annotation.processor.visitor;
 
-import java.util.List;
-
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.SimpleElementVisitor6;
 
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.plugin.annotation.DiscoveryFor;
 import org.rhq.plugin.annotation.processor.AnnotationValueExtractor;
 import org.rhq.plugin.annotation.processor.ProcessingContext;
@@ -47,8 +44,8 @@ public class DiscoveryMethodVisitor extends SimpleElementVisitor6<Void, Processi
 
         AnnotationValueExtractor extractor = processingContext.getValueExtractor(annotation);
 
-        String[] resourceTypes = extractor.getValue("types", String[].class);
-        Boolean manual = extractor.getValue("manual", Boolean.class);
+        String[] resourceTypes = extractor.extractValue("types", String[].class, false);
+        Boolean manual = extractor.extractValue("manual", Boolean.class, false);
 
         for(String resourceType : resourceTypes) {
             ResourceDescriptorAndDiscovery descriptor = processingContext.getResourceTypes().get(resourceType);

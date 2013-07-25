@@ -24,10 +24,14 @@ import java.util.List;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.SimpleAnnotationValueVisitor6;
 import javax.lang.model.util.SimpleElementVisitor6;
 
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ParentResourceType;
 import org.rhq.core.clientapi.descriptor.plugin.PlatformDescriptor;
@@ -36,6 +40,9 @@ import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
+import org.rhq.plugin.annotation.configuration.ResourceConfiguration;
+import org.rhq.plugin.annotation.processor.AgentPluginDescriptorException;
+import org.rhq.plugin.annotation.processor.type.ConfigurationEncoder;
 import org.rhq.plugin.annotation.processor.visitor.util.ResourceDescriptorAndDiscovery;
 import org.rhq.plugin.annotation.type.ClassLoaderType;
 import org.rhq.plugin.annotation.PojoResourceComponent;
@@ -51,12 +58,13 @@ public class ResourceTypeVisitor extends SimpleElementVisitor6<Void, ProcessingC
 
     private static SimpleAnnotationValueVisitor6<BundleTargetDescriptor.DestinationBaseDir, ProcessingContext> fileSystemDestinationExtractor = new SimpleAnnotationValueVisitor6<BundleTargetDescriptor.DestinationBaseDir, ProcessingContext>() {
         @Override
-        public BundleTargetDescriptor.DestinationBaseDir visitAnnotation(AnnotationMirror a, ProcessingContext context) {
+        public BundleTargetDescriptor.DestinationBaseDir visitAnnotation(AnnotationMirror a,
+            ProcessingContext context) {
             AnnotationValueExtractor extractor = context.getValueExtractor(a);
-            String path = extractor.getValue("path", String.class);
+            String path = extractor.extractValue("path", String.class, false);
 
-            BundleTargetDescriptor.DestinationBaseDir baseDir = extractor.extractField("destination",
-                Util.DESTINATION_BASE_DIR_EXTRACTOR);
+            BundleTargetDescriptor.DestinationBaseDir baseDir = extractor.extractValue("destination",
+                false, Util.DESTINATION_BASE_DIR_EXTRACTOR);
             baseDir.setValueContext("fileSystem");
             baseDir.setValueName(path);
 
@@ -89,8 +97,8 @@ public class ResourceTypeVisitor extends SimpleElementVisitor6<Void, ProcessingC
             AnnotationValueExtractor extractor = processingContext.getValueExtractor(a);
 
             ParentResourceType ret = new ParentResourceType();
-            ret.setName(extractor.getValue("name", String.class));
-            ret.setPlugin(extractor.getValue("plugin", String.class));
+            ret.setName(extractor.extractValue("name", String.class, false));
+            ret.setPlugin(extractor.extractValue("plugin", String.class, false));
 
             return ret;
         }
@@ -103,9 +111,9 @@ public class ResourceTypeVisitor extends SimpleElementVisitor6<Void, ProcessingC
 
             AnnotationValueExtractor extractor = processingContext.getValueExtractor(a);
 
-            ret.setName(extractor.getValue("name", String.class));
-            ret.setDisplayName(extractor.getValue("displayName", String.class));
-            ret.setDescription(extractor.getValue("description", String.class));
+            ret.setName(extractor.extractValue("name", String.class, false));
+            ret.setDisplayName(extractor.extractValue("displayName", String.class, false));
+            ret.setDescription(extractor.extractValue("description", String.class, false));
 
             return ret;
         }
@@ -123,7 +131,8 @@ public class ResourceTypeVisitor extends SimpleElementVisitor6<Void, ProcessingC
 
         String name = Common.getAnnotatedName(e);
 
-        PojoResourceComponent.Category category = extractor.getValue("category", PojoResourceComponent.Category.class);
+        PojoResourceComponent.Category category = extractor.extractValue("category",
+            PojoResourceComponent.Category.class, false);
 
         ResourceDescriptorAndDiscovery descriptorAndDiscovery = context.getResourceTypes().get(name);
         if (descriptorAndDiscovery == null) {
@@ -150,8 +159,10 @@ public class ResourceTypeVisitor extends SimpleElementVisitor6<Void, ProcessingC
             descriptorAndDiscovery.setDescriptor(descriptor);
         }
 
-        descriptor.setBundleTarget(extractor.getAnnotationValue("fileSystemBundleDestinations", bundleTargetExtractor));
-        descriptor.setClassLoader(Util.safeToString(extractor.getValue("classLoader", ClassLoaderType.class)));
+        descriptor
+            .setBundleTarget(extractor.extractValue("fileSystemBundleDestinations", false, bundleTargetExtractor));
+        descriptor
+            .setClassLoader(Util.safeToString(extractor.extractValue("classLoader", ClassLoaderType.class, false)));
 
         //TODO this is not right, this should be the synthetized class name
         descriptor.setClazz(e.getQualifiedName().toString());
@@ -160,28 +171,54 @@ public class ResourceTypeVisitor extends SimpleElementVisitor6<Void, ProcessingC
         descriptor.setHelp(Common.getAnnotatedHelp(e));
         descriptor.setName(name);
 
-        //TODO implement configuration definition extraction
-        descriptor.setPluginConfiguration(null);
-        descriptor.setResourceConfiguration(null);
+        ConfigurationEncoder encoder = new ConfigurationEncoder(context);
 
-        List<ParentResourceType> parents = extractor.getAnnotationArrayValue("parents", parentResourceTypeExtractor);
+        List<ExecutableElement> ctors = ElementFilter.constructorsIn(e.getEnclosedElements());
+        for (ExecutableElement ctor : ctors) {
+            List<? extends VariableElement> params = ctor.getParameters();
+            if (params.size() == 1) {
+                TypeElement paramType = (TypeElement) context.getProcessingEnvironment().getTypeUtils()
+                    .asElement(params.get(0).asType());
+                ConfigurationDescriptor config = encoder.encode(paramType);
+                descriptor.setPluginConfiguration(config);
+                break;
+            }
+        }
+
+        List<ExecutableElement> methods = ElementFilter.methodsIn(e.getEnclosedElements());
+        for (ExecutableElement method : methods) {
+            if (Util.findAnnotation(method, ResourceConfiguration.class) != null) {
+                if (descriptor.getResourceConfiguration() != null) {
+                    throw new AgentPluginDescriptorException(
+                        "Only a single method can be annotated by the @ResourceConfiguration annotation in type '" +
+                            e.getQualifiedName().toString() + "'.");
+                }
+                TypeElement returnType = (TypeElement) context.getProcessingEnvironment().getTypeUtils()
+                    .asElement(method.getReturnType());
+                ConfigurationDescriptor config = encoder.encode(returnType);
+                descriptor.setResourceConfiguration(config);
+            }
+        }
+
+        List<ParentResourceType> parents = extractor.extractArrayValue("parents", false, parentResourceTypeExtractor);
         if (Util.notEmpty(parents)) {
             RunsInsideType runsInside = new RunsInsideType();
             runsInside.getParentResourceType().addAll(parents);
             descriptor.setRunsInside(runsInside);
         }
 
-        descriptor.setSingleton(extractor.getValue("singleton", boolean.class));
+        descriptor.setSingleton(extractor.extractValue("singleton", boolean.class, false));
 
         //TODO implement tree-structure of subcategories
-        List<SubCategoryDescriptor> subcatList = extractor.getAnnotationArrayValue("subcategories", subcategoryExtractor);
+        List<SubCategoryDescriptor> subcatList = extractor.extractArrayValue("subcategories", false,
+            subcategoryExtractor);
         if (Util.notEmpty(subcatList)) {
             ResourceDescriptor.Subcategories subcategories = new ResourceDescriptor.Subcategories();
             subcategories.getSubcategory().addAll(subcatList);
             descriptor.setSubcategories(subcategories);
         }
 
-        descriptor.setSubCategory(extractor.getValue("subcategory", String.class));
+        descriptor.setSubCategory(extractor.extractValue("subcategory", String.class, false));
 
         //TODO not supported
         //descriptor.setVersion();

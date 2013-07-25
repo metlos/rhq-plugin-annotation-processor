@@ -21,11 +21,8 @@ package org.rhq.plugin.annotation.processor.visitor;
 
 import java.util.List;
 
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.PackageElement;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor6;
 import javax.lang.model.util.SimpleElementVisitor6;
 
@@ -33,7 +30,6 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.plugin.annotation.AgentPlugin;
 import org.rhq.plugin.annotation.processor.AgentPluginDescriptorException;
 import org.rhq.plugin.annotation.processor.AnnotationValueExtractor;
-import org.rhq.plugin.annotation.processor.AnnotationVisitor;
 import org.rhq.plugin.annotation.processor.ProcessingContext;
 import org.rhq.plugin.annotation.processor.Util;
 
@@ -50,8 +46,8 @@ public class PluginVisitor extends SimpleElementVisitor6<Void, ProcessingContext
 
             AnnotationValueExtractor extractor = context.getValueExtractor(a);
 
-            depends.setPlugin(extractor.getValue("pluginName", String.class));
-            depends.setUseClasses(extractor.getValue("useClasses", Boolean.class));
+            depends.setPlugin(extractor.extractValue("pluginName", String.class, false));
+            depends.setUseClasses(extractor.extractValue("useClasses", Boolean.class, false));
 
             return  depends;
         }
@@ -74,11 +70,11 @@ public class PluginVisitor extends SimpleElementVisitor6<Void, ProcessingContext
         descriptor.setDisplayName(Common.getAnnotatedDisplayName(e));
         descriptor.setDescription(Common.getAnnotatedDescription(e));
         descriptor.setHelp(Common.getAnnotatedHelp(e));
-        descriptor.setAmpsVersion(extractor.getValue("ampsVersion", String.class));
-        descriptor.setPluginLifecycleListener(extractor.getValue("pluginLifecycleListener", String.class));
-        descriptor.setVersion(extractor.getValue("version", String.class));
+        descriptor.setAmpsVersion(extractor.extractValue("ampsVersion", String.class, false));
+        descriptor.setPluginLifecycleListener(extractor.extractValue("pluginLifecycleListener", String.class, false));
+        descriptor.setVersion(extractor.extractValue("version", String.class, false));
 
-        List<PluginDescriptor.Depends> depends = extractor.getAnnotationArrayValue("dependencies", dependsExtractor);
+        List<PluginDescriptor.Depends> depends = extractor.extractArrayValue("dependencies", false, dependsExtractor);
         if (Util.notEmpty(depends)) {
             descriptor.getDepends().addAll(depends);
         }
